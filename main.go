@@ -2,14 +2,17 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/handlers"
 	"github.com/julienschmidt/httprouter"
+	authz "github.com/sanato/sanato-api/auth"
+	"github.com/sanato/sanato-api/files"
+	"github.com/sanato/sanato-lib/auth"
 	"net/http"
 	"os"
 
 	"github.com/sanato/sanato-api/webdav"
-	"github.com/sanato/sanato-lib/auth"
 	"github.com/sanato/sanato-lib/config"
 	"github.com/sanato/sanato-lib/storage"
 )
@@ -43,12 +46,24 @@ func main() {
 
 	router := httprouter.New()
 
+	authAPI, err := authz.NewAPI(router, configProvider, authProvider, storageProvider)
+	if err != nil {
+		logrus.Error(err)
+		os.Exit(1)
+	}
 	webdavAPI, err := webdav.NewAPI(router, configProvider, authProvider, storageProvider)
 	if err != nil {
 		logrus.Error(err)
 		os.Exit(1)
 	}
+	filesAPI, err := files.NewAPI(router, configProvider, authProvider, storageProvider)
+	if err != nil {
+		logrus.Error(err)
+		os.Exit(1)
+	}
+	authAPI.Start()
 	webdavAPI.Start()
+	filesAPI.Start()
 
-	http.ListenAndServe(":3000", handlers.CombinedLoggingHandler(os.Stdout, router))
+	http.ListenAndServe(fmt.Sprintf(":%d", config.Port), handlers.CombinedLoggingHandler(os.Stdout, router))
 }
