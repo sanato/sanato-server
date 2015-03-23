@@ -5,13 +5,13 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/handlers"
 	"github.com/julienschmidt/httprouter"
-	"github.com/whitedav/api/webdav"
 	"net/http"
 	"os"
 
-	"github.com/whitedav/lib/whitedav/auth"
-	"github.com/whitedav/lib/whitedav/config"
-	"github.com/whitedav/lib/whitedav/storage"
+	"github.com/sanato/sanato-api/webdav"
+	"github.com/sanato/sanato-lib/auth"
+	"github.com/sanato/sanato-lib/config"
+	"github.com/sanato/sanato-lib/storage"
 )
 
 func main() {
