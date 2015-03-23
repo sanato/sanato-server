@@ -2,5 +2,7 @@
 
 	"maintenance": false,
 	"readOnly": false,
-	"rootDataDir": "/Users/labkode/tmp"
+	"rootDataDir": "/Users/labkode/tmp",
+	"tokenSecret": "1234567890",
+	"tokenCipherSuite": "HS256"
 }
