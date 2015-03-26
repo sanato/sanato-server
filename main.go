@@ -65,5 +65,6 @@ func main() {
 	webdavAPI.Start()
 	filesAPI.Start()
 
+	router.ServeFiles("/web/*filepath", http.Dir("../sanato-web"))
 	http.ListenAndServe(fmt.Sprintf(":%d", config.Port), handlers.CombinedLoggingHandler(os.Stdout, router))
 }
