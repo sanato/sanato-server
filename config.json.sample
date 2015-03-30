@@ -1,0 +1,9 @@
+{
+
+	"maintenance": false,
+	"port": 3000,
+	"readOnly": false,
+	"rootDataDir": "/Users/labkode/tmp",
+	"tokenSecret": "1234567890",
+	"tokenCipherSuite": "HS256"
+}
