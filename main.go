@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/gorilla/handlers"
 	"github.com/jmcvetta/randutil"
 	"github.com/julienschmidt/httprouter"
 	authz "github.com/sanato/sanato-api/auth"
@@ -87,7 +86,8 @@ func main() {
 	logrus.Info("SERVER STARTED: Listening on port " + fmt.Sprintf(":%d", cfg.Port))
 
 	router.ServeFiles("/web/*filepath", http.Dir("../sanato-web"))
-	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), handlers.CombinedLoggingHandler(os.Stdout, router))
+	//http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), handlers.CombinedLoggingHandler(os.Stdout, router))
+	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), router)
 }
 
 func createConfigFile(cp *config.ConfigProvider) (*config.Config, error) {
