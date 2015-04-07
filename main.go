@@ -22,6 +22,16 @@ import (
 	"github.com/sanato/sanato-lib/storage"
 )
 
+const (
+	DEFAULT_PORT          = 3000
+	DEFAULT_ROOT_DATA_DIR = "."
+	DEFAULT_TEMP_DATA_DIR = "."
+	DEFAULT_WEB_URL       = "/web/"
+	DEFAULT_WEB_DIR       = "."
+
+	DEFAULT_TOKEN_CIPHER_SUITE = "HS256"
+)
+
 func main() {
 	var configFile string
 	var authFile string
@@ -83,47 +93,86 @@ func main() {
 	webdavAPI.Start()
 	filesAPI.Start()
 
-	logrus.Info("SERVER STARTED: Listening on port " + fmt.Sprintf(":%d", cfg.Port))
+	enableWeb(router, cfg)
 
-	router.ServeFiles("/web/*filepath", http.Dir("../sanato-web"))
+	logrus.Info("SERVER STARTED: Listening on port " + fmt.Sprintf("%d", cfg.Port))
+	logrus.Infof("WEB ACCESS at http://localhost:%d%s", cfg.Port, cfg.WebURL)
+	logrus.Infof("WEBDAV ACCESS at http://localhost:%d/webdav/", cfg.Port)
+
 	//http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), handlers.CombinedLoggingHandler(os.Stdout, router))
 	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), router)
 }
-
+func enableWeb(router *httprouter.Router, cfg *config.Config) {
+	router.ServeFiles(filepath.Join(cfg.WebURL, "/", "*filepath"), http.Dir(cfg.WebDir))
+}
 func createConfigFile(cp *config.ConfigProvider) (*config.Config, error) {
-	logrus.Warn("No configuration file found, creating one")
+	logrus.Warn("No configuration file found, we are going to create one")
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("Enter port: ")
+	fmt.Printf("In which port the server is going to listen ? (%d) : ", DEFAULT_PORT)
 	portText, err := reader.ReadString('\n')
 	if err != nil {
 		return nil, err
 	}
 	portText = strings.TrimSuffix(portText, "\n")
 
-	fmt.Print("Enter root data directory: ")
+	fmt.Printf("In which folder do you want to keep the files? (%s) : ", DEFAULT_ROOT_DATA_DIR)
 	rootDataDir, err := reader.ReadString('\n')
 	if err != nil {
 		return nil, err
 	}
 	rootDataDir = strings.TrimSuffix(rootDataDir, "\n")
 
-	fmt.Print("Enter root temporary directory: ")
+	fmt.Printf("In which folder do you want to keep temporary data? (%s) : ", DEFAULT_TEMP_DATA_DIR)
 	rootTempDir, err := reader.ReadString('\n')
 	if err != nil {
 		return nil, err
 	}
 	rootTempDir = strings.TrimSuffix(rootTempDir, "\n")
 
-	// validate port is a number
-	port, err := strconv.ParseUint(portText, 10, 64)
+	fmt.Printf("In which URL do you want to access the server? (%s) : ", DEFAULT_WEB_URL)
+	webURL, err := reader.ReadString('\n')
 	if err != nil {
 		return nil, err
+	}
+	webURL = strings.TrimSuffix(webURL, "\n")
+
+	fmt.Printf("In which folder is the web app? (%s) : ", DEFAULT_WEB_DIR)
+	webDir, err := reader.ReadString('\n')
+	if err != nil {
+		return nil, err
+	}
+	webDir = strings.TrimSuffix(webDir, "\n")
+
+	// validate port is a number
+	var port uint64
+	if portText == "" {
+		port = DEFAULT_PORT
+	} else {
+		port, err = strconv.ParseUint(portText, 10, 64)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// clean rootDataDir and rootTempDir
 	rootDataDir = filepath.Clean(rootDataDir)
 	rootTempDir = filepath.Clean(rootTempDir)
+	webURL = filepath.Clean(webURL)
+	webDir = filepath.Clean(webDir)
+
+	if rootDataDir == "" {
+		rootDataDir = DEFAULT_ROOT_DATA_DIR
+	}
+	if rootTempDir == "" {
+		rootTempDir = DEFAULT_TEMP_DATA_DIR
+	}
+	if webURL == "" || webURL == "." || webURL == "/" {
+		webURL = DEFAULT_WEB_URL
+	}
+	if webDir == "" {
+		webDir = DEFAULT_WEB_DIR
+	}
 
 	// create random secret for signing tokens
 	secret, err := randutil.AlphaString(20)
@@ -136,7 +185,9 @@ func createConfigFile(cp *config.ConfigProvider) (*config.Config, error) {
 	newConfig.RootDataDir = rootDataDir
 	newConfig.RootTempDir = rootTempDir
 	newConfig.TokenSecret = secret
-	newConfig.TokenCipherSuite = "HS256"
+	newConfig.TokenCipherSuite = DEFAULT_TOKEN_CIPHER_SUITE
+	newConfig.WebURL = webURL
+	newConfig.WebDir = webDir
 
 	err = cp.CreateNewConfig(newConfig)
 	if err != nil {
@@ -146,7 +197,7 @@ func createConfigFile(cp *config.ConfigProvider) (*config.Config, error) {
 	return newConfig, nil
 }
 func createUser(ap *auth.AuthProvider) error {
-	logrus.Warn("No authentication file found, creating one")
+	logrus.Warn("No authentication file found, we are going to create one")
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Print("Enter username: ")
