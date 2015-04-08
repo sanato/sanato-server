@@ -3,7 +3,11 @@
 	"maintenance": false,
 	"port": 3000,
 	"readOnly": false,
-	"rootDataDir": "/Users/labkode/tmp",
+	"rootDataDir": "/Users/labkode/sanato-data",
+	"rootTempDir": "/Users/labkode/sanato-tmp",
 	"tokenSecret": "1234567890",
-	"tokenCipherSuite": "HS256"
+	"tokenCipherSuite": "HS256",
+	"serveWeb": true,
+	"webDir": "../sanato-web",
+	"webURL": "/web/"
 }
